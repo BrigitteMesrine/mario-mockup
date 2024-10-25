@@ -5,6 +5,8 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
+import brigitte.mario.util.Time;
+
 import java.nio.*;
 
 import static org.lwjgl.glfw.Callbacks.*;
@@ -20,12 +22,36 @@ public class Window {
     private String title;
     private long glfwWindow;
 
+    public float r, g, b, a;
+    private boolean fadeToBlack = false;
+
     private static Window window = null;
+
+    private static Scene currentScene;
 
     private Window() {
         this.width = 1920;
         this.height = 1080;
         this.title = "Mario";
+        this.r = 1;
+        this.g = 1;
+        this.b = 1;
+        this.a = 1;
+    }
+
+    public static void changeScene(int newScene) {
+        switch (newScene) {
+            case 0:
+                currentScene = new LevelEditorScene();
+                // currentScene.init();
+                break;
+            case 1:
+                currentScene = new LevelScene();
+                break;
+            default:
+                assert false : "Unkown scene '" + newScene + "'";
+                break;
+        }
     }
 
     // Singleton condition
@@ -82,12 +108,16 @@ public class Window {
             throw new IllegalStateException("Failed to create de GLFW window.");
         }
 
+        // -- mouse callbacks
         // forward this callback to mousePosCallback
         glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
 
         glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
 
         glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
+
+        // -- keyboard callbacks
+        glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
 
         // -- make the OpenGL context current --
         glfwMakeContextCurrent(glfwWindow);
@@ -105,19 +135,36 @@ public class Window {
         // the OPenGL bindings available for use.
         GL.createCapabilities();
 
+        Window.changeScene(0);
+
     }
 
     public void loop() {
+        float beginTime = Time.getTime();
+        float endTime;
+        float dt = -1.0f;
+
         while (!glfwWindowShouldClose(glfwWindow)) {
             // poll events (click, move, hover...)
             glfwPollEvents();
 
             // define a color
-            glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+            glClearColor(r, g, b, a);
             // flush that color to the entire window
             glClear(GL_COLOR_BUFFER_BIT);
+            
+            if (dt >= 0) {
+                currentScene.update(dt);            
+            }
 
             glfwSwapBuffers(glfwWindow);
+
+            endTime = Time.getTime();
+            // dt = delta time, time between two frames (loop iterations)
+            dt = endTime - beginTime;
+            System.out.println(dt);
+            beginTime = endTime;
         }
+
     }
 }
