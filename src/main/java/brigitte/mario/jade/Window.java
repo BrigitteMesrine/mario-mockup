@@ -41,12 +41,14 @@ public class Window {
 
     public static void changeScene(int newScene) {
         switch (newScene) {
+            // both scenes are initialized before they are run
             case 0:
                 currentScene = new LevelEditorScene();
-                // currentScene.init();
+                currentScene.init();
                 break;
-            case 1:
+                case 1:
                 currentScene = new LevelScene();
+                currentScene.init();
                 break;
             default:
                 assert false : "Unkown scene '" + newScene + "'";
